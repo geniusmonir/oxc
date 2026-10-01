@@ -7,6 +7,7 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 - Why: semantics (prettier/prettier#19839)
 - Pin: `tests/fixtures/markdown/leading-thematic-break.md`
 - Conformance: `markdown/thematicBreak/simple.md`, `markdown/commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md`
+- Oxfmt: `externals/prettier/markdown/thematicBreak/simple.md`
 
 ```markdown
 <!-- input -->
@@ -41,6 +42,7 @@ Prettier `main` prints `***` since #19839; the pin (3.9.9) still prints `---`.
 - Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
 - Pin: `tests/fixtures/markdown/url-escaping.md`
 - Conformance: `markdown/link/encodedLink.md`
+- Oxfmt: `externals/prettier/markdown/link/encodedLink.md`
 
 ```markdown
 <!-- input -->
@@ -85,6 +87,7 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 - Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
+- Oxfmt: `externals/prettier/markdown/blockquote/ignore-code.md`
 
 ```markdown
 <!-- input -->
@@ -275,6 +278,7 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
 - Conformance: `markdown/paragraph/cjk.md`
+- Oxfmt: `externals/prettier/markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -306,6 +310,7 @@ so like any block it is printed after a blank line, under `preserve` too; Pretti
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/line-shapes.md`
 - Conformance: `markdown/blockquote/notext-end.md`
+- Oxfmt: `externals/prettier/markdown/blockquote/notext-end.md`
 
 ```markdown
 <!-- input -->
@@ -351,6 +356,7 @@ Prettier wraps it like any line: a break right after the destination makes it a 
 
 - Why: semantics (prettier/prettier#13634, prettier/prettier#19112, prettier/prettier#19847)
 - Pin: `tests/fixtures/markdown/prose-wrap/wrapped-block-starts.md`
+- Oxfmt: `externals/prettier/markdown/list/parser-regression/issue-17778.md`
 
 ```markdown
 <!-- input, proseWrap always -->
@@ -374,7 +380,8 @@ Prettier tests a regex of list markers, `#`s and `>` only, so a wrapped `<div>`,
 A kept line break (`proseWrap: preserve`) is dropped by the same rule when its next line only stays text
 by its indentation, which a paragraph does not keep: `| x | y |` over an 8-space `|---|---|` prints as one line,
 Prettier's `|---|---|` at column 0 is a table on the next parse (prettier/prettier#19847).
-Prettier drops the break before `- item`, `# heading` and `> quote` itself.
+Prettier drops the break before `- item`, `# heading` and `> quote` itself, and before `1000000000.` too,
+which its regex takes for a list marker (a marker has at most 9 digits).
 
 ## stray-delimiters
 
@@ -539,6 +546,7 @@ Ours keeps the line.
 
 - Why: uniform-rule (same construct, same output: a paragraph)
 - Pin: `tests/fixtures/markdown/prose-wrap/setext-heading-wrap.md`
+- Oxfmt: `externals/prettier/markdown/heading/setext/issue-6013-2.md`
 
 ```markdown
 <!-- input, proseWrap always -->

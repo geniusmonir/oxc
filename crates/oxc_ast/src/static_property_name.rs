@@ -3,48 +3,40 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use oxc_str::{Ident, JSStr, Str};
-
-use crate::ast::{RegExp, RegExpFlags};
+use oxc_str::{Ident, JSStr};
 
 /// The JavaScript property name of a statically known property key.
 ///
 /// Static means statically determinable, not a `static` class member.
 /// Numeric keys keep their value and are named by the Rust `f64` `Display` text, so equality and
 /// hashing treat `{ 1: a, "1": b }` as declaring the same name twice.
-/// Regex keys are named like the [`RegExp`] `Display` text, which lists flags in canonical order.
 #[derive(Clone, Copy)]
 pub enum StaticPropertyName<'a> {
     /// A name stored in the AST as a string.
     Str(JSStr<'a>),
     /// The value of a numeric key.
     Number(f64),
-    /// The pattern text and flags of a regex key.
-    Regex(Str<'a>, RegExpFlags),
 }
 
 impl<'a> StaticPropertyName<'a> {
     /// Borrow the name as UTF-8, if it is a string without a lone surrogate.
     ///
-    /// Returns `None` for a [`Number`] or [`Regex`] key, whose name exists only as text produced
-    /// on demand.
-    /// Use the [`Display`] implementation to get the name of such a key.
+    /// Returns `None` for a [`Number`] key, whose name exists only as text produced on demand.
+    /// Use the [`Display`] implementation to get the name of a numeric key.
     ///
     /// [`Number`]: Self::Number
-    /// [`Regex`]: Self::Regex
     /// [`Display`]: fmt::Display
     pub fn as_str(self) -> Option<&'a str> {
         match self {
             Self::Str(name) => name.as_str(),
-            Self::Number(_) | Self::Regex(..) => None,
+            Self::Number(_) => None,
         }
     }
 }
 
 /// Call `f` with the full text of `name`, which is the Rust `f64` `Display` text for a numeric key.
 ///
-/// A numeric key is formatted into a stack buffer, so it does not allocate.
-/// A regex key is formatted into a `String`, which is acceptable because regex keys are rare.
+/// A numeric key is formatted into a stack buffer, so this never allocates.
 fn with_name_text<R>(name: StaticPropertyName<'_>, f: impl FnOnce(JSStr<'_>) -> R) -> R {
     match name {
         StaticPropertyName::Str(name) => f(name),
@@ -52,9 +44,6 @@ fn with_name_text<R>(name: StaticPropertyName<'_>, f: impl FnOnce(JSStr<'_>) -> 
             let mut text = NumberText { buffer: [0; NumberText::CAPACITY], len: 0 };
             write!(text, "{value}").expect("`f64` Display text fits in `NumberText`");
             f(JSStr::from(text.as_str()))
-        }
-        StaticPropertyName::Regex(pattern, flags) => {
-            f(JSStr::from(format!("/{pattern}/{flags}").as_str()))
         }
     }
 }
@@ -84,12 +73,6 @@ impl Write for NumberText {
     }
 }
 
-impl<'a> From<&RegExp<'a>> for StaticPropertyName<'a> {
-    fn from(regex: &RegExp<'a>) -> Self {
-        Self::Regex(regex.pattern.text, regex.flags)
-    }
-}
-
 impl<'a> From<&'a str> for StaticPropertyName<'a> {
     fn from(name: &'a str) -> Self {
         Self::Str(JSStr::from(name))
@@ -116,7 +99,9 @@ impl PartialEq for StaticPropertyName<'_> {
             (Self::Number(a), Self::Number(b)) => {
                 a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan())
             }
-            (a, b) => with_name_text(a, |a| with_name_text(b, |b| a == b)),
+            (Self::Str(name), number) | (number, Self::Str(name)) => {
+                with_name_text(number, |number| number == name)
+            }
         }
     }
 }

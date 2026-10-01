@@ -639,9 +639,7 @@ impl<'a> AsyncGeneratorExecutor<'a> {
     fn normalize_function_name(input: StaticPropertyName<'a>, ctx: &TraverseCtx<'a>) -> Ident<'a> {
         let input_str = match input {
             StaticPropertyName::Str(name) => name,
-            StaticPropertyName::Number(_) | StaticPropertyName::Regex(..) => {
-                JSStr::from(format_str!(ctx.allocator(), "{input}"))
-            }
+            StaticPropertyName::Number(_) => JSStr::from(format_str!(ctx.allocator(), "{input}")),
         };
         if let Some(name) = input_str.as_str()
             && !is_reserved_keyword(name)

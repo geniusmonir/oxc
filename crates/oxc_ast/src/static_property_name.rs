@@ -142,19 +142,7 @@ impl fmt::Display for StaticPropertyName<'_> {
     /// Display a name for diagnostics, escaping lone surrogates in the same lowercase spelling as
     /// the Debug form and printed output.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        with_name_text(*self, |name| {
-            if let Some(name) = name.as_str() {
-                return f.write_str(name);
-            }
-            for ch in name.chars() {
-                if let Some(ch) = ch.to_char() {
-                    write!(f, "{ch}")?;
-                } else {
-                    write!(f, "\\u{:04x}", ch.to_u32())?;
-                }
-            }
-            Ok(())
-        })
+        with_name_text(*self, |name| fmt::Display::fmt(&name.display(), f))
     }
 }
 
